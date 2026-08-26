@@ -8,7 +8,7 @@ import org.opencv.core.Scalar;
 import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.teamcode.opMode.utility.RayTracingMethods;
+import org.firstinspires.ftc.teamcode.opMode.utility.RayCastingMethods;
 
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -129,17 +129,17 @@ public class CameraTesting extends LinearOpMode {
             maxGain = Gain.getMaxGain();
 
             if (exposureMode) {
-                if (gamepad1.a && gainNumber <= maxGain) {
+                if (gamepad1.a && gainNumber < maxGain) {
                     gainNumber++;
                 }
-                else if (gamepad1.b && gainNumber >= minGain) {
+                else if (gamepad1.b && gainNumber > minGain) {
                     gainNumber--;
                 }
 
-                if (gamepad1.x && exposureTime <= maxExp) {
+                if (gamepad1.x && exposureTime < maxExp) {
                     exposureTime++;
                 }
-                else if (gamepad1.y && exposureTime >= minExp) {
+                else if (gamepad1.y && exposureTime > minExp) {
                     exposureTime--;
                 }
 
@@ -196,7 +196,7 @@ public class CameraTesting extends LinearOpMode {
                 double Xn = (boxFit.center.x - cx) / fx;
                 double Yn = (boxFit.center.y - cy) / fy;
                 telemetry.addLine("Normalized Camera Coordinates: " + Xn + ", " + Yn);
-                double [] relBallCoordinates = RayTracingMethods.getBallPose(Xn, Yn, relativeCameraPose, cameraPitch, ballPlaneHeight);
+                double [] relBallCoordinates = RayCastingMethods.getBallPose(Xn, Yn, relativeCameraPose, cameraPitch, ballPlaneHeight);
                 //Rounding coordinates to 100s place.
                 double ballX = (double) Math.round(relBallCoordinates[0]*100) / 100 ;
                 double ballY = (double) Math.round(relBallCoordinates[1]*100) / 100 ;

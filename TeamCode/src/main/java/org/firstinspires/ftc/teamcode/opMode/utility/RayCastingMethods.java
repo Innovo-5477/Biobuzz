@@ -4,9 +4,7 @@ package org.firstinspires.ftc.teamcode.opMode.utility;
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
-import com.pedropathing.geometry.Pose;
-
-public class RayTracingMethods {
+public class RayCastingMethods {
 
     public static double [] getBallPose(double Xn, double Yn, double[] cameraPosition, double pitch, double ballPlaneHeight) {
         double [] directionVector = new double[]{Xn, Yn, 1};
@@ -16,7 +14,7 @@ public class RayTracingMethods {
 
 
         double lambda = (ballPlaneHeight-height) / worldVector[2];
-        double ballX = cameraPosition[0] + lambda*worldVector[2];
+        double ballX = cameraPosition[0] + lambda*worldVector[0];
         double ballY = cameraPosition[1] + lambda*worldVector[1];
         return new double[]{ballX, ballY};
 
@@ -39,7 +37,10 @@ public class RayTracingMethods {
 
         for (int i = 0; i<3;i++) {
             for (int j = 0; j<3; j++) {
-                directionVector[i] *= rotationMatrix[i][j];
+                if (rotationMatrix[i][j] != 0){
+                    directionVector[i] *= rotationMatrix[i][j];
+                }
+
             }
         }
         return directionVector;
@@ -48,8 +49,8 @@ public class RayTracingMethods {
     private static double [][] getRotationMatrix(double pitch) {
         return new double[][]{
                 {1, 0, 0},
-                {0, sin(Math.toDegrees(pitch)), cos(Math.toDegrees(pitch))},
-                {0, cos(Math.toDegrees(pitch)), -sin(Math.toDegrees(pitch))}
+                {0, sin(Math.toRadians(pitch)), cos(Math.toRadians(pitch))},
+                {0, cos(Math.toRadians(pitch)), -sin(Math.toRadians(pitch))}
         };
     }
 
