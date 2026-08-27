@@ -52,10 +52,10 @@ public class CameraTesting extends LinearOpMode {
 
         int gainNumber = 255;
         int exposureTime = 15;
-        int fx = 1;
-        int fy = 1;
-        int cx = 1;
-        int cy = 1;
+        int fx = 900;
+        int fy = 900;
+        int cx = 640;
+        int cy = 400;
         double [] relativeCameraPose = new double[]{0, 0.056, 6.7};
         double cameraPitch = 10;
         double ballPlaneHeight = 1.45;
@@ -68,8 +68,8 @@ public class CameraTesting extends LinearOpMode {
         // options that you have when creating these processors, go check out
         // the ConceptAprilTag OpMode.
 
-        Scalar minValue = new Scalar(180, 60, 0);
-        Scalar maxValue = new Scalar(255, 165, 60);
+        Scalar minValue = new Scalar(0, 150, 0);
+        Scalar maxValue = new Scalar(255, 210, 120);
 
         aprilTag = new AprilTagProcessor.Builder()
                 .setLensIntrinsics(fx, fy, cx, cy)
@@ -84,7 +84,7 @@ public class CameraTesting extends LinearOpMode {
         colorLocatorProcessor =  new ColorBlobLocatorProcessor.Builder()
                 .setTargetColorRange(orange)   //ColorRange.YELLOW // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
-                .setRoi(ImageRegion.asUnityCenterCoordinates(-0.1, 1, 1, -1)) //Was .75 for each below, don't need to crop outer edges imo
+                .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1)) //Was .75 for each below, don't need to crop outer edges imo
                 .setDrawContours(true)   // Show contours on the Stream Preview
                 .setBlurSize(5)
                 .setErodeSize(0)
