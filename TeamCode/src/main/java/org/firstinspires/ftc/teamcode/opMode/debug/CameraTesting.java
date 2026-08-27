@@ -109,9 +109,16 @@ public class CameraTesting extends LinearOpMode {
 
         boolean started = false;
         boolean exposureMode = true;
+        boolean triggeredBefore = false;
         while (opModeIsActive()) {
             if (gamepad1.left_bumper) {
-                exposureMode = !exposureMode;
+                if (!triggeredBefore) {
+                    exposureMode = !exposureMode;
+                }
+                triggeredBefore = true;
+            }
+            else {
+                triggeredBefore = false;
             }
 
             ExposureControl exposure = visionPortal.getCameraControl(ExposureControl.class);
@@ -166,7 +173,7 @@ public class CameraTesting extends LinearOpMode {
             if (!currentDetections.isEmpty()) {
                 //I'm assuming the first tag it detects will be obelisk if multiple r in frame.
                 AprilTagDetection mainTag = currentDetections.get(0);
-                if (mainTag.metadata != null && mainTag.id != 20 && mainTag.id != 24) {
+                if (mainTag.metadata != null && mainTag.id != 20 && mainTag.id != 24) { //Change for biobuzz
                     id = mainTag.id;
                 }
                 ActiveOpMode.telemetry().addData("April tag id: ", id);
@@ -191,25 +198,30 @@ public class CameraTesting extends LinearOpMode {
             for(ColorBlobLocatorProcessor.Blob b : blobs)
             {
                 RotatedRect boxFit = b.getBoxFit();
-                telemetry.addLine("------- Blob " + i + " -------");
-                telemetry.addLine("Pixel Camera Coordinates: "  + boxFit.center.x + ", " + boxFit.center.y);
+                ActiveOpMode.telemetry().addLine("------- Blob " + i + " -------");
+                ActiveOpMode.telemetry().addLine("Pixel Camera Coordinates: "  + boxFit.center.x + ", " + boxFit.center.y);
                 double Xn = (boxFit.center.x - cx) / fx;
                 double Yn = (boxFit.center.y - cy) / fy;
-                telemetry.addLine("Normalized Camera Coordinates: " + Xn + ", " + Yn);
+                ActiveOpMode.telemetry().addLine("Normalized Camera Coordinates: " + Xn + ", " + Yn);
                 double [] relBallCoordinates = RayCastingMethods.getBallPose(Xn, Yn, relativeCameraPose, cameraPitch, ballPlaneHeight);
                 //Rounding coordinates to 100s place.
                 double ballX = (double) Math.round(relBallCoordinates[0]*100) / 100 ;
                 double ballY = (double) Math.round(relBallCoordinates[1]*100) / 100 ;
-                telemetry.addLine("Ball Coordinates: " + ballX + ", " + ballY);
+                ActiveOpMode.telemetry().addLine("Ball Coordinates: " + ballX + ", " + ballY);
 
-                telemetry.addLine("Contour Area: " + b.getContourArea() + ", Density: " + b.getDensity() +
+                ActiveOpMode.telemetry().addLine("Contour Area: " + b.getContourArea() + ", Density: " + b.getDensity() +
                         ", Aspect Ratio: " + b.getAspectRatio() + ", Arc Length: " + (int) b.getArcLength() + ", Circularity: " + b.getCircularity());
 //                telemetry.addLine(String.format("(%3d,%3d) %5d %4.2f  %5.2f %3d %5.3f ",
 //                        (int) boxFit.center.x, (int) boxFit.center.y, b.getContourArea(), b.getDensity(),
 //                        b.getAspectRatio(), (int) b.getArcLength(), b.getCircularity()));
+                i++;
+
             }
 
-            visionPortal.saveNextFrameRaw("Combined Test");
+            if (gamepad1.right_trigger_pressed) {
+                visionPortal.saveNextFrameRaw("Combined Test");
+            }
+
 
             ActiveOpMode.telemetry().update();
 

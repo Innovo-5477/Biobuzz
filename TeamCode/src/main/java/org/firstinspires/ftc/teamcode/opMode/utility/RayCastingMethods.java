@@ -26,31 +26,33 @@ public class RayCastingMethods {
         double z = matrix[2];
 
         double magnitude = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
-        x /= magnitude;
-        y /= magnitude;
-        z /= magnitude;
-        return new double[]{x, y, z};
+        if (magnitude != 0) {
+            x /= magnitude;
+            y /= magnitude;
+            z /= magnitude;
+            return new double[]{x, y, z};
+        }
+        else return matrix;
     }
 
     private static double [] pitchTransform(double [] directionVector, double pitch) {
         double [][] rotationMatrix = getRotationMatrix(pitch);
 
+        double [] finalArr = new double[3];
+
         for (int i = 0; i<3;i++) {
             for (int j = 0; j<3; j++) {
-                if (rotationMatrix[i][j] != 0){
-                    directionVector[i] *= rotationMatrix[i][j];
-                }
-
+                finalArr[i] += directionVector[j] * rotationMatrix[i][j];
             }
         }
-        return directionVector;
+        return finalArr;
     }
 
     private static double [][] getRotationMatrix(double pitch) {
         return new double[][]{
                 {1, 0, 0},
-                {0, sin(Math.toRadians(pitch)), cos(Math.toRadians(pitch))},
-                {0, cos(Math.toRadians(pitch)), -sin(Math.toRadians(pitch))}
+                {0, -sin(Math.toRadians(pitch)), cos(Math.toRadians(pitch))},
+                {0, -cos(Math.toRadians(pitch)), -sin(Math.toRadians(pitch))}
         };
     }
 
