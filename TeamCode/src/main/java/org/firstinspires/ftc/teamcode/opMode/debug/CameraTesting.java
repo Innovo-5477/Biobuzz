@@ -68,8 +68,8 @@ public class CameraTesting extends LinearOpMode {
         // options that you have when creating these processors, go check out
         // the ConceptAprilTag OpMode.
 
-        Scalar minValue = new Scalar( 32, 176,  0);
-        Scalar maxValue = new Scalar(255, 255, 132);
+        Scalar minValue = new Scalar(180, 60, 0);
+        Scalar maxValue = new Scalar(255, 165, 60);
 
         aprilTag = new AprilTagProcessor.Builder()
                 .setLensIntrinsics(fx, fy, cx, cy)
