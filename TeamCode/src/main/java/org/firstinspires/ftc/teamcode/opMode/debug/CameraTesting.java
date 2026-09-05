@@ -50,6 +50,7 @@ public class CameraTesting extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
+        //Change
         int gainNumber = 255;
         int exposureTime = 15;
         int fx = 900;
