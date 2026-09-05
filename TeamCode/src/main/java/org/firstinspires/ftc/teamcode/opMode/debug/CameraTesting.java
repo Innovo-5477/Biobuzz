@@ -52,6 +52,9 @@ public class CameraTesting extends LinearOpMode {
 
         int gainNumber = 255;
         int exposureTime = 15;
+        double circularityThreshold = 0.5;
+        double minCircularity = 0;
+        double maxCircularity = 1;
         int fx = 1;
         int fy = 1;
         int cx = 1;
@@ -68,8 +71,8 @@ public class CameraTesting extends LinearOpMode {
         // options that you have when creating these processors, go check out
         // the ConceptAprilTag OpMode.
 
-        Scalar minValue = new Scalar(180, 60, 0);
-        Scalar maxValue = new Scalar(255, 165, 60);
+        Scalar minValue = new Scalar(0, 150, 0);
+        Scalar maxValue = new Scalar(255, 210, 120);
 
         aprilTag = new AprilTagProcessor.Builder()
                 .setLensIntrinsics(fx, fy, cx, cy)
@@ -84,7 +87,7 @@ public class CameraTesting extends LinearOpMode {
         colorLocatorProcessor =  new ColorBlobLocatorProcessor.Builder()
                 .setTargetColorRange(orange)   //ColorRange.YELLOW // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
-                .setRoi(ImageRegion.asUnityCenterCoordinates(-0.1, 1, 1, -1)) //Was .75 for each below, don't need to crop outer edges imo
+                .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1)) //Was .75 for each below, don't need to crop outer edges imo
                 .setDrawContours(true)   // Show contours on the Stream Preview
                 .setBlurSize(5)
                 .setErodeSize(0)
@@ -135,6 +138,15 @@ public class CameraTesting extends LinearOpMode {
             minGain = Gain.getMinGain();
             maxGain = Gain.getMaxGain();
 
+            if (gamepad1.right_trigger_pressed && circularityThreshold < maxCircularity) {
+                circularityThreshold += 0.01;
+            }
+            if (gamepad1.left_trigger_pressed && circularityThreshold > minCircularity) {
+                circularityThreshold -= 0.01;
+            }
+
+
+
             if (exposureMode) {
                 if (gamepad1.a && gainNumber < maxGain) {
                     gainNumber++;
@@ -168,6 +180,7 @@ public class CameraTesting extends LinearOpMode {
 
             }
 
+            ActiveOpMode.telemetry().addData("Circularity Threshold: ", circularityThreshold);
             List<AprilTagDetection> currentDetections = aprilTag.getDetections();
             ActiveOpMode.telemetry().addData("# AprilTags Detected", currentDetections.size());
             if (!currentDetections.isEmpty()) {
@@ -197,24 +210,27 @@ public class CameraTesting extends LinearOpMode {
 
             for(ColorBlobLocatorProcessor.Blob b : blobs)
             {
-                RotatedRect boxFit = b.getBoxFit();
-                ActiveOpMode.telemetry().addLine("------- Blob " + i + " -------");
-                ActiveOpMode.telemetry().addLine("Pixel Camera Coordinates: "  + boxFit.center.x + ", " + boxFit.center.y);
-                double Xn = (boxFit.center.x - cx) / fx;
-                double Yn = (boxFit.center.y - cy) / fy;
-                ActiveOpMode.telemetry().addLine("Normalized Camera Coordinates: " + Xn + ", " + Yn);
-                double [] relBallCoordinates = RayCastingMethods.getBallPose(Xn, Yn, relativeCameraPose, cameraPitch, ballPlaneHeight);
-                //Rounding coordinates to 100s place.
-                double ballX = (double) Math.round(relBallCoordinates[0]*100) / 100 ;
-                double ballY = (double) Math.round(relBallCoordinates[1]*100) / 100 ;
-                ActiveOpMode.telemetry().addLine("Ball Coordinates: " + ballX + ", " + ballY);
+                if (b.getCircularity() > circularityThreshold) {
+                    RotatedRect boxFit = b.getBoxFit();
+                    ActiveOpMode.telemetry().addLine("------- Blob " + i + " -------");
+                    ActiveOpMode.telemetry().addLine("Pixel Camera Coordinates: "  + boxFit.center.x + ", " + boxFit.center.y);
+                    double Xn = (boxFit.center.x - cx) / fx;
+                    double Yn = (boxFit.center.y - cy) / fy;
+                    ActiveOpMode.telemetry().addLine("Normalized Camera Coordinates: " + Xn + ", " + Yn);
+                    double [] relBallCoordinates = RayCastingMethods.getBallPose(Xn, Yn, relativeCameraPose, cameraPitch, ballPlaneHeight);
+                    //Rounding coordinates to 100s place.
+                    double ballX = (double) Math.round(relBallCoordinates[0]*100) / 100 ;
+                    double ballY = (double) Math.round(relBallCoordinates[1]*100) / 100 ;
+                    ActiveOpMode.telemetry().addLine("Ball Coordinates: " + ballX + ", " + ballY);
 
-                ActiveOpMode.telemetry().addLine("Contour Area: " + b.getContourArea() + ", Density: " + b.getDensity() +
-                        ", Aspect Ratio: " + b.getAspectRatio() + ", Arc Length: " + (int) b.getArcLength() + ", Circularity: " + b.getCircularity());
+                    ActiveOpMode.telemetry().addLine("Contour Area: " + b.getContourArea() + ", Density: " + b.getDensity() +
+                            ", Aspect Ratio: " + b.getAspectRatio() + ", Arc Length: " + (int) b.getArcLength() + ", Circularity: " + b.getCircularity());
 //                telemetry.addLine(String.format("(%3d,%3d) %5d %4.2f  %5.2f %3d %5.3f ",
 //                        (int) boxFit.center.x, (int) boxFit.center.y, b.getContourArea(), b.getDensity(),
 //                        b.getAspectRatio(), (int) b.getArcLength(), b.getCircularity()));
-                i++;
+                    i++;
+                }
+
 
             }
 
