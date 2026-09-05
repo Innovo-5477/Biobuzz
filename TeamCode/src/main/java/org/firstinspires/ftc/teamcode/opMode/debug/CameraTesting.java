@@ -68,8 +68,8 @@ public class CameraTesting extends LinearOpMode {
         // options that you have when creating these processors, go check out
         // the ConceptAprilTag OpMode.
 
-        Scalar minValue = new Scalar(0, 150, 0);
-        Scalar maxValue = new Scalar(255, 210, 120);
+        Scalar minValue = new Scalar(0, 130, 40);
+        Scalar maxValue = new Scalar(255, 180, 110);
 
         aprilTag = new AprilTagProcessor.Builder()
                 .setLensIntrinsics(fx, fy, cx, cy)
@@ -97,6 +97,7 @@ public class CameraTesting extends LinearOpMode {
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setCameraResolution(new Size(1280,800))
+                //.enableLiveView(true)
                 .setStreamFormat(VisionPortal.StreamFormat.YUY2)
                 .addProcessor(aprilTag)
                 .addProcessor(colorLocatorProcessor)
@@ -189,7 +190,7 @@ public class CameraTesting extends LinearOpMode {
             //Blobs have to have a min aspect ratio of 1 (perfect square) and a max of 1.5 (one side is twice as long as its adjacent)
             ColorBlobLocatorProcessor.Util.filterByCriteria(
                     ColorBlobLocatorProcessor.BlobCriteria.BY_ASPECT_RATIO,
-                    1, 1.5, blobs);
+                    1, 1.1, blobs);
 
 
 
