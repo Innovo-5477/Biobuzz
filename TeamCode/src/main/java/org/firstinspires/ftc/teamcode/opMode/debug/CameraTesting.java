@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.opMode.debug;
 
 import android.util.Size;
 
+import org.firstinspires.ftc.teamcode.opMode.constants.CameraConstants;
+import org.firstinspires.ftc.teamcode.opMode.utility.BallAreaMethods;
 import org.firstinspires.ftc.vision.opencv.ColorSpace;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
@@ -58,13 +60,14 @@ public class CameraTesting extends LinearOpMode {
         double circularityThreshold = 0.5;
         double minCircularity = 0;
         double maxCircularity = 1;
-        double fx = 905.667;
-        double fy = 908.232;
-        double cx = 690.280;
-        double cy = 363.489;
-        double [] relativeCameraPose = new double[]{0, 0.056, 6.7};
-        double cameraPitch = 10;
-        double ballPlaneHeight = 1.45;
+        double fx = CameraConstants.fx;
+        double fy = CameraConstants.fy;
+        double cx = CameraConstants.cx;
+        double cy = CameraConstants.cy;
+//        double [] relativeCameraPose = CameraConstants.relativeCameraPose;
+//        double cameraPitch = CameraConstants.cameraPitch;
+//        double ballPlaneHeight = CameraConstants.ballPlaneHeight;
+
 
 
 
@@ -114,7 +117,147 @@ public class CameraTesting extends LinearOpMode {
                 .addProcessor(aprilTag)
                 .addProcessor(colorLocatorProcessor)
                 .build();
+        boolean autoTuneMode = false;
+        int innerIteration = 0;
+        int outerIteration = 0;
+        int [] gradientDirection = new int[]{5, 1};
+        double gainLearningRate = 0.1;
+        double exposureLearningRate = 0.07;
+        double initalError = 0;
+        double postGainError = 0;
+        double postExposureError = 0;
+        while (opModeInInit()) {
 
+
+
+            ExposureControl exposure = visionPortal.getCameraControl(ExposureControl.class);
+            exposure.setMode(ExposureControl.Mode.Manual);
+
+
+            GainControl Gain = visionPortal.getCameraControl(GainControl.class);
+
+
+            minExp = exposure.getMinExposure(TimeUnit.MILLISECONDS);
+            maxExp = exposure.getMaxExposure(TimeUnit.MILLISECONDS);
+
+            // Get webcam gain limits.
+            minGain = Gain.getMinGain();
+            maxGain = Gain.getMaxGain();
+
+            if (exposureTime < maxExp && exposureTime > minExp) {
+                exposure.setExposure(exposureTime, TimeUnit.MILLISECONDS);
+            }
+            if (gainNumber < maxGain && gainNumber > minGain) {
+                Gain.setGain(gainNumber);
+            }
+
+
+            sleep(300);
+
+
+
+            List<ColorBlobLocatorProcessor.Blob> blobs = colorLocatorProcessor.getBlobs();
+
+            //Blobs have to have a min contour area of 50 pixels and max of 20k pixels
+            ColorBlobLocatorProcessor.Util.filterByCriteria(
+                    ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA,
+                    50, 750000, blobs);
+
+
+            if (outerIteration > 25) {
+                gainLearningRate = 0.05;
+                exposureLearningRate = 0.035;
+            }
+            if (!(blobs.isEmpty())) {
+                if (outerIteration < 50) {
+                    int gainChange = gradientDirection[0];
+                    int exposureChange = gradientDirection[1];
+                    switch (innerIteration){
+                        case 0:
+                            initalError = BallAreaMethods.getLoss(blobs);
+                            gainNumber+=gainChange;
+                            innerIteration++;
+                            break;
+                        case 1:
+                            postGainError = BallAreaMethods.getLoss(blobs);
+                            gainNumber-=gainChange;
+                            exposureTime+=exposureChange;
+                            innerIteration++;
+                            break;
+                        case 2:
+                            postExposureError = BallAreaMethods.getLoss(blobs);
+                            exposureTime-=exposureChange;
+                            innerIteration = 0;
+                            outerIteration++;
+
+                            double gainErrorChange = postGainError-initalError;
+                            double exposureErrorChange = postExposureError-initalError;
+
+                            int newGainChange = -1 * (int) Math.round(gainErrorChange * gainLearningRate);
+                            if (newGainChange < -5) {
+                                newGainChange = -5;
+                            }
+                            if (newGainChange > 5) {
+                                newGainChange = 5;
+                            }
+                            int newExposureChange = -1 * (int) Math.round((exposureErrorChange * exposureLearningRate));
+                            if (newExposureChange < -2) {
+                                newExposureChange = -2;
+                            }
+                            if (newExposureChange > 2) {
+                                newExposureChange = 2;
+                            }
+                            if (gainNumber + newGainChange < minGain) {
+                                newGainChange = gainNumber - (minGain);
+                            }
+                            if (gainNumber + newGainChange > maxGain) {
+                                newGainChange = maxGain - gainNumber;
+                            }
+                            if (exposureTime + newExposureChange < minExp) {
+                                newExposureChange = exposureTime - (int) Math.round((minExp));
+                            }
+                            if (exposureTime + newExposureChange > maxExp) {
+                                newExposureChange = (int) Math.round((maxExp)) - exposureTime;
+                            }
+
+                            if (newExposureChange == 0) {
+                                newExposureChange = (exposureErrorChange < 0) ? 1 : -1;
+                            }
+
+                            if (newGainChange == 0) {
+                                newGainChange = (gainErrorChange < 0) ? 1 : -1;
+                            }
+
+                            if (gainNumber >= maxGain) {
+                                newGainChange = maxGain - gainNumber - 3;
+                            }
+                            if (gainNumber <= minGain) {
+                                newGainChange = minGain - gainNumber + 3;
+                            }
+                            if (exposureTime >= maxExp) {
+                                newExposureChange = (int) maxExp - exposureTime - 1;
+                            }
+                            if (exposureTime <= minExp) {
+                                newExposureChange = (int) minExp - exposureTime + 1;
+                            }
+
+
+                            gradientDirection[0] = newGainChange;
+                            gradientDirection[1] = newExposureChange;
+                            break;
+
+
+                    }
+
+
+
+                }
+            }
+
+
+
+
+        }
         waitForStart();
 
 
@@ -123,6 +266,8 @@ public class CameraTesting extends LinearOpMode {
         boolean started = false;
         boolean exposureMode = true;
         boolean triggeredBefore = false;
+
+
         while (opModeIsActive()) {
             if (gamepad1.left_bumper) {
                 if (!triggeredBefore) {
@@ -234,8 +379,12 @@ public class CameraTesting extends LinearOpMode {
                         ActiveOpMode.telemetry().addLine("Pixel Camera Coordinates: " + boxFit.center.x + ", " + boxFit.center.y);
                         double Xn = (x- cx) / fx;
                         double Yn = (y- cy) / fy;
+                        double tx = Math.atan(Xn);
+                        double ty = Math.atan(Yn);
                         ActiveOpMode.telemetry().addLine("Normalized Camera Coordinates: " + Xn + ", " + Yn);
-                        double[] relBallCoordinates = RayCastingMethods.getBallPose(Xn, Yn, relativeCameraPose, cameraPitch, ballPlaneHeight);
+                        ActiveOpMode.telemetry().addLine("Tx, Ty: " + tx + ", " + ty);
+
+                        double[] relBallCoordinates = RayCastingMethods.getBallPose(x, y);
                         //Rounding coordinates to 100s place.
                         double ballX = (double) Math.round(relBallCoordinates[0] * 100) / 100;
                         double ballY = (double) Math.round(relBallCoordinates[1] * 100) / 100;
