@@ -97,13 +97,13 @@ public class CameraTesting extends LinearOpMode {
 
 
         colorLocatorProcessor =  new ColorBlobLocatorProcessor.Builder()
-                .setTargetColorRange(orange)   //ColorRange.YELLOW // use a predefined color match
+                .setTargetColorRange(yellow)   //ColorRange.YELLOW // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
-                .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -0.5)) //Was .75 for each below, don't need to crop outer edges imo
+                .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 0.5, 1, -1)) //Was .75 for each below, don't need to crop outer edges imo
                 .setDrawContours(true)   // Show contours on the Stream Preview
                 .setBlurSize(22)
                 .setErodeSize(23)
-                .setDilateSize(0)// Smooth the transitions between different colors in image
+                .setDilateSize(23)// Smooth the transitions between different colors in image
                 .build();
 
         // Now we build both portals. The CRITICAL thing to notice here is the call to
@@ -126,7 +126,15 @@ public class CameraTesting extends LinearOpMode {
         double initalError = 0;
         double postGainError = 0;
         double postExposureError = 0;
+
+        boolean firstRun = true;
         while (opModeInInit()) {
+
+            if (firstRun) {
+                sleep(2000);
+                firstRun = false;
+
+            }
 
 
 
@@ -152,7 +160,7 @@ public class CameraTesting extends LinearOpMode {
             }
 
 
-            sleep(300);
+            sleep(250);
 
 
 
@@ -374,8 +382,10 @@ public class CameraTesting extends LinearOpMode {
                         RotatedRect boxFit = b.getBoxFit();
                         ActiveOpMode.telemetry().addLine("------- Blob " + i + " -------");
 
-                        double x = cx - (boxFit.center.x - cx); //THIS IS FLIPPED
-                        double y = cy - (boxFit.center.y - cy);
+//                        double x = cx - (boxFit.center.x - cx); //THIS IS FLIPPED
+//                        double y = cy - (boxFit.center.y - cy);
+                        double x = boxFit.center.x;
+                        double y = boxFit.center.y;
                         ActiveOpMode.telemetry().addLine("Pixel Camera Coordinates: " + boxFit.center.x + ", " + boxFit.center.y);
                         double Xn = (x- cx) / fx;
                         double Yn = (y- cy) / fy;
